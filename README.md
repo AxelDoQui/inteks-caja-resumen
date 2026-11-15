@@ -26,10 +26,13 @@ hablando con el script por `fetch` en vez de `google.script.run`. Pantallas:
   `deshacerEntregaWU`).
 - **Divisas → Cambio de divisas** — local, divisa, cantidad, euros, fecha y
   notas (`guardarCambio`). Reponer y Fondo de divisas aún no están aquí.
+- **Historial** — los diez tipos de movimiento (cierres tienda, recogidas
+  tienda, salidas de ventas, WU, RIA, recogidas WU, reponer WU/RIA, cambios,
+  reposiciones, fondo divisas), con **Anular** pidiendo motivo, igual que la
+  web (`historial`, `anular`, `deshacerIngreso`). Anular no borra nada: el
+  movimiento queda tachado.
 
-La baldosa de Inicio para lo que aún no está construido (Historial) avisa con
-un toast en vez de desaparecer, para que la rejilla se vea completa como en
-la web.
+Ya está toda la rejilla de Inicio construida.
 
 Los guardados van **directos a la hoja**, sin cola ni reintento: si no hay
 red, se avisa y no se guarda nada (como la web; a diferencia del Panel de

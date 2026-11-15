@@ -38,7 +38,7 @@
 }
 body[data-p="tienda"]{--modulo:var(--m-tienda)} body[data-p="envios"]{--modulo:var(--m-envios)}
 body[data-p="rtienda"]{--modulo:var(--m-rtienda)} body[data-p="rwu"]{--modulo:var(--m-rwu)}
-body[data-p="divisas"]{--modulo:var(--m-divisas)} body[data-p="resumen"]{--modulo:var(--m-resumen)}
+body[data-p="divisas"]{--modulo:var(--m-divisas)} body[data-p="resumen"]{--modulo:var(--m-resumen)} body[data-p="hist"]{--modulo:var(--m-hist)}
 
 /* ── Base ── */
 *{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
@@ -160,6 +160,14 @@ input:disabled{opacity:.6}
 .lista .c{flex:1;min-width:0}.lista .tit{font-weight:600}.lista .sub{font-size:12.5px;color:var(--sub);margin-top:2px}
 .lista .imp{font-weight:700;white-space:nowrap;text-align:right}
 .vacio{color:var(--sub);font-size:13.5px;padding:10px 0!important}
+.lista li.anulado .tit,.lista li.anulado .imp{text-decoration:line-through;color:var(--sub);opacity:.7}
+.chipsel{display:flex;gap:8px;overflow-x:auto;padding:2px 0 12px;scrollbar-width:none;margin:0 -14px;padding-left:14px;padding-right:14px}
+.chipsel::-webkit-scrollbar{display:none}
+.chipsel button{flex:none;border:1px solid var(--line);background:var(--surface);border-radius:999px;height:38px;padding:0 14px;font-size:13.5px;font-weight:600;color:var(--sub);cursor:pointer;font-family:inherit}
+.chipsel button.on{background:var(--ink);border-color:var(--ink);color:var(--bg)}
+#hLista li{flex-wrap:wrap}#hLista li>.imp{flex:1;text-align:left}
+#hLista li>.acc{flex-direction:row;align-items:center}
+#hLista li .c{flex:1 1 100%}
 
 /* ── Segmentos ── */
 .seg{display:flex;background:var(--surface2);border:1px solid var(--line);border-radius:14px;padding:4px;gap:4px;margin-bottom:12px}
@@ -234,7 +242,7 @@ input:disabled{opacity:.6}
     <button class="tile" data-ir="rwu" style="--c:var(--m-rwu)"><span class="ic"><svg class="i"><use href="#i-rwu"/></svg></span><b>Recogida WU</b><small>Miércoles y domingo</small></button>
     <button class="tile" data-ir="divisas" style="--c:var(--m-divisas)"><span class="ic"><svg class="i"><use href="#i-divisas"/></svg></span><b>Divisas</b><small>Apuntar un cambio</small></button>
     <button class="tile" data-ir="resumen" style="--c:var(--m-resumen)"><span class="ic"><svg class="i"><use href="#i-resumen"/></svg></span><b>Resumen</b><small>Totales del mes</small></button>
-    <button class="tile ancho pronto" data-pronto="Historial" style="--c:var(--m-hist)"><span class="ic"><svg class="i"><use href="#i-hist"/></svg></span><span class="tx"><b>Historial</b><small>Aún no está aquí</small></span></button>
+    <button class="tile ancho" data-ir="hist" style="--c:var(--m-hist)"><span class="ic"><svg class="i"><use href="#i-hist"/></svg></span><span class="tx"><b>Historial</b><small>Ver y anular movimientos</small></span></button>
   </div>
   <div class="aviso r" id="vAviso" style="display:none;margin-top:14px"></div>
   <p class="hint" style="text-align:center;margin-top:18px">Cambiar conexión: <a href="#" onclick="mostrarConexion('');return false">pulsa aquí</a></p>
@@ -383,6 +391,17 @@ input:disabled{opacity:.6}
   </div>
 </section>
 
+<!-- ═════════ HISTORIAL / ANULAR ═════════ -->
+<section class="pant" id="p-hist">
+  <div class="chipsel" id="hTipo">
+    <button data-t="tienda" class="on">Cierres tienda</button><button data-t="rtienda">Recogidas tienda</button><button data-t="sacar">Salidas de ventas</button>
+    <button data-t="wu">WU</button><button data-t="ria">RIA</button><button data-t="rwu">Recogidas WU</button><button data-t="deuda">Reponer WU/RIA</button>
+    <button data-t="cambio">Cambios</button><button data-t="repo">Reposiciones</button><button data-t="fondo">Fondo divisas</button>
+  </div>
+  <div class="hint" style="margin:-4px 2px 10px">Anular no borra nada: el movimiento queda tachado, deja de contar y se deshace lo que dependía de él.</div>
+  <div class="card"><ul class="lista" id="hLista"></ul></div>
+</section>
+
 </main>
 
 <div id="toast"></div>
@@ -460,6 +479,24 @@ function conCarga(el, p) { el.classList.add('cargando'); return p.then(function 
 function boton(btn, p, ok) { btn.disabled = true; return p.then(function (x) { btn.disabled = false; ok(x); }).catch(function (e) { btn.disabled = false; fallo(e); }); }
 function nombreDiv(c) { return (D && D.nombresDivisas && D.nombresDivisas[c]) || ''; }
 function opcionesDiv(sel) { sel.innerHTML = ''; D.divisas.forEach(function (c) { var o = document.createElement('option'); o.value = c; o.textContent = c + (nombreDiv(c) ? ' · ' + nombreDiv(c) : ''); sel.appendChild(o); }); }
+/* Anular con motivo (común a todas las pantallas) */
+function anularUI(tipo, id, txt, btn, despues) {
+  var motivo = prompt('¿Anular ' + txt + '?\n\nEscribe el motivo (opcional) y pulsa Aceptar:', '');
+  if (motivo === null) return;
+  boton(btn, run('anular', tipo, id, motivo), function () { toast('Anulado'); despues(); });
+}
+function filaAnulable(x, tipo, cuerpo, extraBtn) {
+  var der = x.anulado ? '<span class="chip r" title="' + esc(x.anulado) + '">ANULADO</span>'
+    : (x.bloqueo ? '<span class="hint" style="max-width:90px;text-align:right">' + esc(x.bloqueo) + '</span>'
+    : (extraBtn || '') + '<button class="anb" data-t="' + tipo + '" data-id="' + esc(x.id) + '">Anular</button>');
+  return '<li class="' + (x.anulado ? 'anulado' : '') + '">' + cuerpo + '<div class="acc">' + der + '</div></li>';
+}
+function enlazarAnular(ul, despues) {
+  ul.querySelectorAll('.anb[data-id]').forEach(function (b) { b.addEventListener('click', function (e) {
+    e.stopPropagation();
+    var li = b.closest('li'), t = li.querySelector('.tit'); anularUI(b.dataset.t, b.dataset.id, t ? t.textContent : b.dataset.id, b, despues);
+  }); });
+}
 function fechaNav(inputId, diaId, cb) {
   var inp = $(inputId);
   inp.parentNode.querySelectorAll('button').forEach(function (b) { b.addEventListener('click', function () { inp.value = sumarDia(inp.value, +b.dataset.dia); upd(); }); });
@@ -470,7 +507,7 @@ function fechaNav(inputId, diaId, cb) {
 
 /* ───────── navegación ───────── */
 var D = null, actual = 'inicio';
-var TITULOS = {inicio: 'InTeks Caja', tienda: 'Cierre tienda', envios: 'Cierre WU / RIA', rtienda: 'Recogida tienda', rwu: 'Recogida WU', divisas: 'Divisas', resumen: 'Resumen'};
+var TITULOS = {inicio: 'InTeks Caja', tienda: 'Cierre tienda', envios: 'Cierre WU / RIA', rtienda: 'Recogida tienda', rwu: 'Recogida WU', divisas: 'Divisas', resumen: 'Resumen', hist: 'Historial'};
 function ir(p) {
   actual = p;
   document.querySelectorAll('.pant').forEach(function (s) { s.classList.toggle('on', s.id === 'p-' + p); });
@@ -879,6 +916,31 @@ CARGAR.resumen = function () {
       : '<li class="vacio">Sin divisas en poder.</li>';
   }).catch(fallo);
 };
+
+/* ───────── HISTORIAL / ANULAR ───────── */
+var hTipo = 'tienda';
+document.querySelectorAll('#hTipo button').forEach(function (b) { b.addEventListener('click', function () {
+  document.querySelectorAll('#hTipo button').forEach(function (x) { x.classList.toggle('on', x === b); }); hTipo = b.dataset.t; cargarHist();
+}); });
+CARGAR.hist = function () { cargarHist(); };
+function cargarHist() {
+  var ul = $('hLista'); ul.innerHTML = '<li class="vacio">Cargando…</li>';
+  run('historial', hTipo, 40).then(function (l) {
+    if (!l.length) return vacio(ul, 'Nada todavía.');
+    ul.innerHTML = l.map(function (x) {
+      var tit = (x.dia ? '<span style="text-transform:capitalize">' + esc(x.dia) + '</span> ' : '') + esc(x.fecha) + (['tienda', 'repo', 'fondo', 'cambio', 'deuda', 'sacar'].indexOf(hTipo) >= 0 ? ' · ' + esc(x.titulo) : '');
+      var extra = hTipo === 'rtienda' && x.ingresado && !x.anulado ? '<button class="anb g" data-ing="' + esc(x.id) + '">Quitar ingresado</button>' : '';
+      var imp = x.importe == null ? '<span class="hint">sin importe</span>' : (x.importe === 0 && hTipo === 'fondo' ? '' : eur(x.importe));
+      return filaAnulable(x, hTipo, '<div class="c"><div class="tit">' + tit + '</div><div class="sub">' + esc(x.id) + ' · ' + esc(x.sub) +
+        (hTipo === 'rtienda' ? ' · ' + esc(x.titulo) : '') + (x.anulado ? '<br>Anulado: ' + esc(x.anulado) : '') + '</div></div><div class="imp">' + imp + '</div>', extra);
+    }).join('');
+    enlazarAnular(ul, cargarHist);
+    ul.querySelectorAll('[data-ing]').forEach(function (b) { b.addEventListener('click', function () {
+      if (!confirm('¿Quitar la marca de ingresado de ' + b.dataset.ing + '?')) return;
+      boton(b, run('deshacerIngreso', b.dataset.ing), function () { toast('Marca quitada'); cargarHist(); });
+    }); });
+  }).catch(fallo);
+}
 
 /* ───────── arranque ───────── */
 function arrancar() {

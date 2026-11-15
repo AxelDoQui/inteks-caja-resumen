@@ -1,7 +1,7 @@
 // Service worker de "InTeks Caja". Solo cachea el cascarón (HTML, manifest,
 // iconos) para que la app abra al instante; los datos de verdad (resumenApp,
 // datosIniciales, getEnvios…) van siempre a la red, nunca a caché.
-var VERSION = 'caja-resumen-v6';
+var VERSION = 'caja-resumen-v7';
 var ARCHIVOS = ['./', 'index.html', 'manifest.webmanifest',
   'icono-192.png', 'icono-512.png', 'icono-maskable-512.png'];
 
