@@ -168,6 +168,9 @@ input:disabled{opacity:.6}
 #hLista li{flex-wrap:wrap}#hLista li>.imp{flex:1;text-align:left}
 #hLista li>.acc{flex-direction:row;align-items:center}
 #hLista li .c{flex:1 1 100%}
+.saldos{display:grid;grid-template-columns:repeat(auto-fill,minmax(120px,1fr));gap:8px}
+.saldos div{background:var(--surface2);border-radius:var(--r-m);padding:10px 12px}.saldos b{display:block;font-size:18px}.saldos span{font-size:12px;color:var(--sub)}
+.saldos div.eur{background:var(--marca-tinte)}.saldos div.eur b{color:var(--marca-txt)}
 
 /* ── Segmentos ── */
 .seg{display:flex;background:var(--surface2);border:1px solid var(--line);border-radius:14px;padding:4px;gap:4px;margin-bottom:12px}
@@ -368,15 +371,53 @@ input:disabled{opacity:.6}
       </div>
       <label>Euros entregados <span class="hint">(si no lo sabes, vacío)</span></label>
       <input id="dcEur" inputmode="decimal" placeholder="0,00">
+      <div class="hint" id="dcTipo" style="margin-top:6px"></div>
+      <div class="res" id="dcFondo"></div>
       <label>Fecha</label>
       <input id="dcFecha" type="date">
       <label>Notas</label>
       <input id="dcNotas">
       <button class="btn" id="dcBtn" style="margin-top:14px">Guardar cambio</button>
     </div>
+    <div class="card"><h2>Últimos cambios</h2><ul class="lista" id="dcLista"></ul></div>
   </div>
-  <div id="d-reponer" style="display:none"></div>
-  <div id="d-fondo" style="display:none"></div>
+  <div id="d-reponer" style="display:none">
+    <div class="card">
+      <h2>Cambios pendientes</h2>
+      <ul class="lista check" id="drLista"></ul>
+      <label>Importe repuesto (€)</label><input id="drImp" inputmode="decimal">
+      <div class="res" id="drRes"></div>
+      <button class="btn" id="drBtn">Guardar reposición</button>
+    </div>
+  </div>
+  <div id="d-fondo" style="display:none">
+    <div class="card">
+      <h2>Saldos del fondo</h2>
+      <div class="saldos" id="dfSaldos"></div>
+    </div>
+    <div class="card">
+      <label style="margin-top:0">Movimiento</label>
+      <select id="dfTipo">
+        <option value="Entrada de dinero">Meter euros</option>
+        <option value="Salida de dinero">Sacar euros</option>
+        <option value="Entrada de divisa">Meter divisa (USD, GBP…)</option>
+        <option value="Salida de divisa">Sacar divisa</option>
+        <option value="Venta de divisas">Vender divisa (entran euros)</option>
+        <option value="Ajuste">Ajuste en euros (+/−)</option>
+      </select>
+      <div id="dfVenta" style="display:none">
+        <div class="fila">
+          <div><label>Divisa</label><select id="dfDiv"></select></div>
+          <div><label>Cantidad</label><input id="dfCant" inputmode="decimal"></div>
+        </div>
+      </div>
+      <div id="dfImpBox"><label id="dfLbl">Euros que metes</label><input id="dfImp" inputmode="decimal"></div>
+      <label>Notas</label><input id="dfNotas">
+      <div class="res" id="dfRes"></div>
+      <button class="btn" id="dfBtn">Guardar</button>
+    </div>
+    <div class="card"><h2>Movimientos del fondo</h2><ul class="lista" id="dfLista"></ul></div>
+  </div>
 </section>
 
 <!-- ═════════ RESUMEN ═════════ -->
@@ -879,17 +920,58 @@ $('wBtn').addEventListener('click', function () {
   });
 });
 
-/* ───────── DIVISAS (Cambio) ───────── */
+/* ───────── DIVISAS ───────── */
+var sub = 'cambio', DD = {pendientes: [], saldo: 0, enPoder: {}, ultimos: [], fondo: []}, drEd = false;
+function seg(cont, cb) { cont.querySelectorAll('button').forEach(function (b) { b.addEventListener('click', function () { cont.querySelectorAll('button').forEach(function (x) { x.classList.toggle('on', x === b); }); cb(b); }); }); }
+seg($('dSeg'), function (b) { sub = b.dataset.d; ['cambio', 'reponer', 'fondo'].forEach(function (k) { $('d-' + k).style.display = k === sub ? 'block' : 'none'; }); pintarDiv(); });
+$('dfTipo').addEventListener('change', uiFondo);
+$('dLocal').addEventListener('change', function () { CARGAR.divisas(); });
 CARGAR.divisas = function () {
-  if (!document.getElementById('dcFecha').value) document.getElementById('dcFecha').value = D.hoy;
+  if (!$('dcFecha').value) $('dcFecha').value = D.hoy;
+  conCarga($('p-divisas'), run('datosDivisas', $('dLocal').value)).then(function (d) { DD = d; drEd = false; pintarDiv(); }).catch(fallo);
 };
-document.querySelectorAll('#dSeg button').forEach(function (b) {
-  b.addEventListener('click', function () {
-    if (b.dataset.d !== 'cambio') { toast('Reponer y Fondo aún no están en el móvil. Dilo y se añaden.', false); return; }
-    document.querySelectorAll('#dSeg button').forEach(function (x) { x.classList.toggle('on', x === b); });
-    ['cambio', 'reponer', 'fondo'].forEach(function (n) { $('d-' + n).style.display = n === b.dataset.d ? 'block' : 'none'; });
-  });
-});
+function pintarDiv() {
+  $('dLocal').style.display = sub === 'fondo' ? 'none' : '';
+  var ul = $('dcLista');
+  if (!DD.ultimos.length) vacio(ul, 'Ninguno todavía.');
+  else {
+    ul.innerHTML = DD.ultimos.map(function (x) { return filaAnulable(x, 'cambio',
+      '<div class="c"><div class="tit">' + esc(x.titulo) + '</div><div class="sub">' + esc(x.fecha) + ' · ' + esc(x.sub.split(' · ').slice(1).join(' · ')) + '</div></div>' +
+      '<div class="imp">' + (x.importe == null ? '<span class="hint">sin importe</span>' : eur(x.importe)) + '</div>'); }).join('');
+    enlazarAnular(ul, CARGAR.divisas);
+  }
+  var dl = $('drLista');
+  if (!DD.pendientes.length) vacio(dl, 'No hay cambios pendientes en ' + $('dLocal').value + '.');
+  else {
+    dl.innerHTML = DD.pendientes.map(function (c, i) { return '<li><input type="checkbox" class="dchk" data-i="' + i + '" checked><div class="c"><div class="tit">' + fmt(c.cantidad) + ' ' + esc(c.divisa) + '</div><div class="sub">' + esc(c.fecha) + '</div></div><div class="imp">' + (c.euros == null ? '<span class="hint">sin importe</span>' : eur(c.euros)) + '</div></li>'; }).join('');
+    dl.querySelectorAll('li').forEach(function (li) { li.addEventListener('click', function (e) { var c = li.querySelector('.dchk'); if (e.target !== c) c.checked = !c.checked; calcRepo(); }); });
+  }
+  calcRepo();
+  var fl = $('dfLista');
+  if (!DD.fondo.length) vacio(fl, 'Sin movimientos.');
+  else {
+    fl.innerHTML = DD.fondo.map(function (x) { return filaAnulable(x, 'fondo', '<div class="c"><div class="tit">' + esc(x.titulo) + '</div><div class="sub">' + esc(x.fecha) + ' · ' + esc(x.sub) + '</div></div>' +
+      '<div class="imp ' + (x.importe < 0 ? 'neg' : (x.importe > 0 ? 'cero' : '')) + '">' + (x.importe ? (x.importe > 0 ? '+' : '') + eur(x.importe) : '') + '</div>'); }).join('');
+    enlazarAnular(fl, CARGAR.divisas);
+  }
+  var pend = (DD.saldo || 0) - (DD.disponible || 0);
+  var sal = '<div class="eur"><b>' + eur(DD.disponible) + '</b><span>Disponible</span></div>' +
+    '<div><b>' + eur(DD.saldo) + '</b><span>En el fondo' + (Math.abs(pend) > 0.009 ? ' · ' + eur(pend) + ' por reponer' : '') + '</span></div>';
+  var tot = DD.divisasTot || DD.enPoder;
+  Object.keys(tot).forEach(function (k) { var fuera = (tot[k] || 0) - (DD.enPoder[k] || 0);
+    sal += '<div><b>' + fmt(tot[k]) + ' ' + esc(k) + '</b><span>' + esc(nombreDiv(k)) + (fuera > 0.0001 ? ' · ' + fmt(fuera) + ' aún en locales' : '') + '</span></div>'; });
+  $('dfSaldos').innerHTML = sal;
+  uiFondo(); tipoCambio();
+}
+function tipoCambio() {
+  var c = num($('dcCant').value), e = num($('dcEur').value), dv = $('dcDiv').value;
+  $('dcTipo').textContent = c && e ? 'Tipo: ' + (e / c).toFixed(4).replace('.', ',') + ' € por ' + dv : '';
+  var a = DD.disponible || 0, d = a - (e || 0), ha = (DD.divisasTot || {})[dv] || 0;
+  $('dcFondo').innerHTML = 'Fondo disponible: <b>' + eur(a) + '</b>' + (e ? ' → <b class="' + (d < 0 ? 'neg' : '') + '">' + eur(d) + '</b>' : '') +
+    '<br>' + esc(dv) + ' en el fondo: <b>' + fmt(ha) + '</b>' + (c ? ' → <b>' + fmt(ha + c) + '</b>' : '') +
+    (c && !e ? '<br><span class="pos">Sin euros no se descuenta del fondo disponible.</span>' : '');
+}
+['dcCant', 'dcEur'].forEach(function (id) { $(id).addEventListener('input', tipoCambio); }); $('dcDiv').addEventListener('change', tipoCambio);
 $('dcBtn').addEventListener('click', function () {
   var local = $('dLocal').value, divisa = $('dcDiv').value;
   var cantidad = num($('dcCant').value), euros = num($('dcEur').value), fecha = $('dcFecha').value;
@@ -897,9 +979,41 @@ $('dcBtn').addEventListener('click', function () {
   if (!divisa) { fallo(new Error('Elige la divisa.')); return; }
   if (!cantidad || cantidad <= 0) { fallo(new Error('Pon cuánto te dieron en esa divisa.')); return; }
   if (!fecha) { fallo(new Error('Falta la fecha.')); return; }
-  boton(this, run('guardarCambio', {local: local, divisa: divisa, cantidad: cantidad, euros: euros, notas: $('dcNotas').value, fecha: fecha}), function (id) {
-    toast('Guardado (' + id + ')');
-    $('dcCant').value = ''; $('dcEur').value = ''; $('dcNotas').value = '';
+  var e = euros || 0, a = DD.disponible || 0;
+  boton(this, run('guardarCambio', {local: local, divisa: divisa, cantidad: cantidad, euros: euros, notas: $('dcNotas').value, fecha: fecha}), function () {
+    toast('Cambio guardado · fondo ' + eur(a) + ' → ' + eur(a - e));
+    $('dcCant').value = ''; $('dcEur').value = ''; $('dcNotas').value = ''; CARGAR.divisas();
+  });
+});
+function marcadosD() { var r = []; document.querySelectorAll('.dchk').forEach(function (c) { if (c.checked) r.push(DD.pendientes[+c.dataset.i]); }); return r; }
+function calcRepo() {
+  var e = marcadosD(), s = 0, sin = 0; e.forEach(function (c) { if (c.euros == null) sin++; else s += c.euros; });
+  if (!drEd) $('drImp').value = s && !sin ? fmt(s) : '';
+  var i = num($('drImp').value) || 0;
+  $('drRes').innerHTML = (sin ? '<span class="pos">' + sin + ' sin importe: escribe el total real.</span><br>' : '') + 'Fondo: <b>' + eur(DD.saldo) + '</b>' + (i ? ' → después: <b class="' + (DD.saldo - i < 0 ? 'neg' : '') + '">' + eur(DD.saldo - i) + '</b>' : '');
+}
+$('drImp').addEventListener('input', function () { drEd = true; calcRepo(); });
+$('drBtn').addEventListener('click', function () {
+  var e = marcadosD(); if (!e.length) return toast('Marca algún cambio.', false);
+  boton(this, run('guardarReposicion', {local: $('dLocal').value, fecha: D.hoy, importe: $('drImp').value, ids: e.map(function (c) { return c.id; })}), function () { toast('Reposición guardada'); CARGAR.divisas(); });
+});
+function uiFondo() {
+  var t = $('dfTipo').value, conDiv = /divisa/i.test(t), dv = $('dfDiv').value;
+  var soloDiv = t === 'Entrada de divisa' || t === 'Salida de divisa';
+  $('dfVenta').style.display = conDiv ? 'block' : 'none';
+  $('dfImpBox').style.display = soloDiv ? 'none' : 'block';
+  $('dfLbl').textContent = {'Entrada de dinero': 'Euros que metes', 'Salida de dinero': 'Euros que sacas', 'Venta de divisas': 'Euros recibidos', 'Ajuste': 'Importe en euros (negativo resta)'}[t] || 'Importe';
+  var i = num($('dfImp').value) || 0, c = num($('dfCant').value) || 0, tiene = DD.enPoder[dv] || 0;
+  var dEur = t === 'Salida de dinero' ? -i : (soloDiv ? 0 : i);
+  var h = 'Euros: <b>' + eur(DD.saldo) + '</b>' + (dEur ? ' → <b class="' + (DD.saldo + dEur < 0 ? 'neg' : '') + '">' + eur(DD.saldo + dEur) + '</b>' : '');
+  if (conDiv) { var dDiv = t === 'Entrada de divisa' ? c : -c;
+    h += '<br>' + esc(dv) + ': <b>' + fmt(tiene) + '</b>' + (c ? ' → <b class="' + (tiene + dDiv < 0 ? 'neg' : '') + '">' + fmt(tiene + dDiv) + '</b>' : ''); }
+  $('dfRes').innerHTML = h;
+}
+$('dfImp').addEventListener('input', uiFondo); $('dfCant').addEventListener('input', uiFondo); $('dfDiv').addEventListener('change', uiFondo);
+$('dfBtn').addEventListener('click', function () {
+  boton(this, run('guardarMovimientoFondo', {tipo: $('dfTipo').value, divisa: $('dfDiv').value, cantidad: $('dfCant').value, importe: $('dfImp').value, fecha: D.hoy, notas: $('dfNotas').value}), function () {
+    toast('Movimiento guardado'); $('dfImp').value = ''; $('dfCant').value = ''; $('dfNotas').value = ''; CARGAR.divisas();
   });
 });
 
@@ -951,7 +1065,7 @@ function arrancar() {
     opciones($('tTienda'), d.tiendas, d.tiendas[0]); $('tTienda').style.display = (d.tiendas || []).length > 1 ? '' : 'none';
     opciones($('rTienda'), d.tiendas, d.tiendas[0]); $('rTienda').style.display = (d.tiendas || []).length > 1 ? '' : 'none';
     opciones($('dLocal'), d.locales, d.locales[0]);
-    opcionesDiv($('dcDiv'));
+    opcionesDiv($('dcDiv')); opcionesDiv($('dfDiv'));
     (d.personas || []).forEach(function (p) { var o = document.createElement('option'); o.value = p; $('dlPersonas').appendChild(o); });
     pintarEnvios();
     var h = (location.hash || '').slice(1);

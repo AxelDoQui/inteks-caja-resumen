@@ -24,8 +24,11 @@ hablando con el script por `fetch` en vez de `google.script.run`. Pantallas:
   «Entregado ✓» / Ajustar, igual que la web (`propuestaRecogidaWU`,
   `guardarRecogidaWU`, `ajustarRecogidaWU`, `marcarEntregadaWU`,
   `deshacerEntregaWU`).
-- **Divisas → Cambio de divisas** — local, divisa, cantidad, euros, fecha y
-  notas (`guardarCambio`). Reponer y Fondo de divisas aún no están aquí.
+- **Divisas** — Cambio (con tipo de cambio y previsión del fondo en vivo,
+  fecha editable y últimos cambios con Anular), Reponer (marcar cambios
+  pendientes y guardar la reposición) y Fondo (saldos y mover dinero o
+  divisa), igual que la web (`datosDivisas`, `guardarCambio`,
+  `guardarReposicion`, `guardarMovimientoFondo`).
 - **Historial** — los diez tipos de movimiento (cierres tienda, recogidas
   tienda, salidas de ventas, WU, RIA, recogidas WU, reponer WU/RIA, cambios,
   reposiciones, fondo divisas), con **Anular** pidiendo motivo, igual que la
