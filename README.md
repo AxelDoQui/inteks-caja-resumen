@@ -18,12 +18,18 @@ hablando con el script por `fetch` en vez de `google.script.run`. Pantallas:
   ingresarlo), igual que la web (`getPendientesTienda`, `getTraidosPendientes`,
   `getDeudaEnvios`, `guardarRecogidaTienda`, `getSinIngresar`,
   `marcarIngresada`, `sacarDeRecogida`).
+- **Recogida WU** — el bloque lunes–miércoles o jueves–domingo (o fechas a
+  mano), el importe por local, ajustes (sobra/falta según WU), lo pendiente
+  de reponer antes de preparar el dinero, y las últimas recogidas con
+  «Entregado ✓» / Ajustar, igual que la web (`propuestaRecogidaWU`,
+  `guardarRecogidaWU`, `ajustarRecogidaWU`, `marcarEntregadaWU`,
+  `deshacerEntregaWU`).
 - **Divisas → Cambio de divisas** — local, divisa, cantidad, euros, fecha y
   notas (`guardarCambio`). Reponer y Fondo de divisas aún no están aquí.
 
-Las baldosas de Inicio para lo que aún no está construido (Recogida WU,
-Historial) avisan con un toast en vez de desaparecer, para que la rejilla se
-vea completa como en la web.
+La baldosa de Inicio para lo que aún no está construido (Historial) avisa con
+un toast en vez de desaparecer, para que la rejilla se vea completa como en
+la web.
 
 Los guardados van **directos a la hoja**, sin cola ni reintento: si no hay
 red, se avisa y no se guarda nada (como la web; a diferencia del Panel de

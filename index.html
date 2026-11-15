@@ -37,7 +37,7 @@
   }
 }
 body[data-p="tienda"]{--modulo:var(--m-tienda)} body[data-p="envios"]{--modulo:var(--m-envios)}
-body[data-p="rtienda"]{--modulo:var(--m-rtienda)}
+body[data-p="rtienda"]{--modulo:var(--m-rtienda)} body[data-p="rwu"]{--modulo:var(--m-rwu)}
 body[data-p="divisas"]{--modulo:var(--m-divisas)} body[data-p="resumen"]{--modulo:var(--m-resumen)}
 
 /* ── Base ── */
@@ -131,6 +131,17 @@ input:disabled{opacity:.6}
 .fecha button:active{background:var(--surface2)}
 .fecha input{flex:1;text-align:center;font-weight:700;background:var(--surface)}
 .diasem{text-align:center;color:var(--sub);font-size:13.5px;margin:0 0 12px;font-weight:600}
+.bloque{flex:1;background:var(--surface);border:1px solid var(--line);border-radius:var(--r-m);min-height:50px;display:flex;flex-direction:column;align-items:center;justify-content:center;font-weight:700;text-transform:capitalize;line-height:1.25;padding:4px}
+.bloque small{font-weight:500;color:var(--sub);font-size:12px;text-transform:none}
+.kv{display:flex;justify-content:space-between;gap:10px;padding:9px 0;border-bottom:1px solid var(--line)}.kv:last-child{border:0}.kv b{white-space:nowrap}
+.kv>span{color:var(--sub)}
+.chip{display:inline-flex;align-items:center;height:24px;font-size:12px;padding:0 9px;border-radius:999px;background:var(--surface2);color:var(--sub);font-weight:600;white-space:nowrap}
+.chip.v{background:var(--verde-bg);color:var(--verde)}.chip.n{background:var(--naranja-bg);color:var(--naranja)}.chip.r{background:var(--rojo-bg);color:var(--rojo)}
+.linea.aj{flex-wrap:wrap;background:var(--surface2);border-radius:var(--r-m);padding:8px}.linea.aj>.ajL{flex:1 1 100%}.linea.aj>.ajT{flex:1.3}.linea.aj>.ajI{flex:1}
+.linea.aj input,.linea.aj select{background:var(--surface)}
+#wHist li .c{flex:1 1 100%}
+#wHist li>.imp{flex:1;text-align:left;font-size:17px}
+#wHist li>.acc{flex-direction:row;flex-wrap:wrap;justify-content:flex-end;align-items:center}
 
 /* ── Resultados ── */
 .tot{display:flex;justify-content:space-between;align-items:baseline;padding:12px 0 0;margin-top:12px;border-top:1px dashed var(--line);font-size:14.5px;color:var(--sub)}
@@ -220,7 +231,7 @@ input:disabled{opacity:.6}
     <button class="tile" data-ir="tienda" style="--c:var(--m-tienda)"><span class="ic"><svg class="i"><use href="#i-tienda"/></svg></span><b>Cierre tienda</b><small>Z y Stacker</small></button>
     <button class="tile" data-ir="envios" style="--c:var(--m-envios)"><span class="ic"><svg class="i"><use href="#i-envios"/></svg></span><b>Cierre WU / RIA</b><small>Importe por local</small></button>
     <button class="tile" data-ir="rtienda" style="--c:var(--m-rtienda)"><span class="ic"><svg class="i"><use href="#i-rtienda"/></svg></span><b>Recogida tienda</b><small>Y a ingresar en el banco</small></button>
-    <button class="tile pronto" data-pronto="Recogida WU" style="--c:var(--m-rwu)"><span class="ic"><svg class="i"><use href="#i-rwu"/></svg></span><b>Recogida WU</b><small>Aún no está aquí</small></button>
+    <button class="tile" data-ir="rwu" style="--c:var(--m-rwu)"><span class="ic"><svg class="i"><use href="#i-rwu"/></svg></span><b>Recogida WU</b><small>Miércoles y domingo</small></button>
     <button class="tile" data-ir="divisas" style="--c:var(--m-divisas)"><span class="ic"><svg class="i"><use href="#i-divisas"/></svg></span><b>Divisas</b><small>Apuntar un cambio</small></button>
     <button class="tile" data-ir="resumen" style="--c:var(--m-resumen)"><span class="ic"><svg class="i"><use href="#i-resumen"/></svg></span><b>Resumen</b><small>Totales del mes</small></button>
     <button class="tile ancho pronto" data-pronto="Historial" style="--c:var(--m-hist)"><span class="ic"><svg class="i"><use href="#i-hist"/></svg></span><span class="tx"><b>Historial</b><small>Aún no está aquí</small></span></button>
@@ -304,6 +315,34 @@ input:disabled{opacity:.6}
   <div class="card">
     <h2>Pendiente de ingresar <span id="rTotIng"></span></h2>
     <ul class="lista" id="rIngresos"></ul>
+  </div>
+</section>
+
+<!-- ═════════ RECOGIDA WU ═════════ -->
+<section class="pant" id="p-rwu">
+  <div class="hint" style="margin:0 2px 10px">Se prepara después del cierre: el <b>miércoles</b> (lunes a miércoles) y el <b>domingo</b> (jueves a domingo).</div>
+  <div class="fecha"><button id="wPrev" aria-label="Bloque anterior"><svg class="i"><use href="#i-atras"/></svg></button><div class="bloque" id="wBloque">—</div><button id="wNext" aria-label="Bloque siguiente"><svg class="i"><use href="#i-sig"/></svg></button></div>
+  <div class="card">
+    <div class="tot" style="padding-top:0"><span>Fecha de la recogida</span><b id="wFecha" style="font-size:16px;text-transform:capitalize">—</b></div>
+    <button class="mas" id="wCambiar">Cambiar fechas a mano</button>
+    <div class="fila" id="wFechas" style="display:none">
+      <div><label>Desde</label><input type="date" id="wDesde"></div>
+      <div><label>Hasta</label><input type="date" id="wHasta"></div>
+    </div>
+    <div class="aviso" id="wAviso" style="display:none"></div>
+    <h3>Por local</h3>
+    <div id="wLocales"></div>
+    <div id="wAjustes"></div>
+    <button class="btn sec" id="wAddAj">+ Ajuste según WU (sobra / falta)</button>
+    <input id="wMotivo" placeholder="Motivo del ajuste (ej. sobraba según WU)" style="display:none;margin-top:8px">
+    <div class="res"><span id="wDesglose"></span><span>A entregar</span><br><span class="big" id="wTotal">—</span><span id="wEnCaja"></span></div>
+    <h3>Días incluidos</h3>
+    <ul class="lista" id="wDias"></ul>
+    <button class="btn" id="wBtn" style="margin-top:12px">Guardar recogida WU</button>
+  </div>
+  <div class="card">
+    <h2>Últimas recogidas WU <span id="wCaja" class="tag"></span></h2>
+    <ul class="lista" id="wHist"></ul>
   </div>
 </section>
 
@@ -431,7 +470,7 @@ function fechaNav(inputId, diaId, cb) {
 
 /* ───────── navegación ───────── */
 var D = null, actual = 'inicio';
-var TITULOS = {inicio: 'InTeks Caja', tienda: 'Cierre tienda', envios: 'Cierre WU / RIA', rtienda: 'Recogida tienda', divisas: 'Divisas', resumen: 'Resumen'};
+var TITULOS = {inicio: 'InTeks Caja', tienda: 'Cierre tienda', envios: 'Cierre WU / RIA', rtienda: 'Recogida tienda', rwu: 'Recogida WU', divisas: 'Divisas', resumen: 'Resumen'};
 function ir(p) {
   actual = p;
   document.querySelectorAll('.pant').forEach(function (s) { s.classList.toggle('on', s.id === 'p-' + p); });
@@ -690,6 +729,117 @@ $('rBtn').addEventListener('click', function () {
   boton(this, run('guardarRecogidaTienda', {tienda: $('rTienda').value, ids: marcadosT().map(function (c) { return c.id; }),
     aportes: lineas($('rAportes')), retiradas: lineas($('rRetiradas')), reposiciones: reposRT(),
     traidos: marcadosTr().map(function (d) { return d.id; })}), function (r) { toast('Recogida guardada · a ingresar ' + eur(r.aIngresar)); CARGAR.rtienda(); });
+});
+
+/* ───────── RECOGIDA WU ───────── */
+var wInit = false, wRef = null, wCierres = 0, wPend = 0;
+function lineaAjWU() {
+  var div = document.createElement('div'); div.className = 'linea aj';
+  var l = document.createElement('select'); opciones(l, D.localesWU, D.localesWU[0]); l.className = 'ajL';
+  var t = document.createElement('select'); t.className = 'ajT'; t.innerHTML = '<option value="-1">− Quitar</option><option value="1">+ Añadir</option>';
+  var i = document.createElement('input'); i.className = 'ajI'; i.placeholder = '€'; i.setAttribute('inputmode', 'decimal');
+  var x = document.createElement('button'); x.className = 'x'; x.textContent = '✕'; x.onclick = function () { div.remove(); calcAjWU(); };
+  [t, i].forEach(function (e) { e.addEventListener('input', calcAjWU); e.addEventListener('change', calcAjWU); });
+  div.appendChild(l); div.appendChild(t); div.appendChild(i); div.appendChild(x);
+  $('wAjustes').appendChild(div); $('wMotivo').style.display = 'block'; i.focus(); calcAjWU();
+}
+function ajustesWU() {
+  var r = [];
+  document.querySelectorAll('#wAjustes .aj').forEach(function (d) {
+    var v = num(d.querySelector('.ajI').value);
+    if (v) r.push({local: d.querySelector('.ajL').value, importe: v * Number(d.querySelector('.ajT').value)});
+  });
+  return r;
+}
+function calcAjWU() {
+  var a = ajustesWU(), t = 0; a.forEach(function (x) { t += x.importe; });
+  if (!document.querySelector('#wAjustes .aj')) $('wMotivo').style.display = 'none';
+  $('wDesglose').innerHTML = a.length ? 'Cierres: ' + eur(wCierres) + '<br>Ajuste: <span class="' + (t < 0 ? 'neg' : 'pos') + '">' + (t > 0 ? '+' : '') + eur(t) + '</span><br>' : '';
+  $('wTotal').textContent = eur(wCierres + t);
+  $('wEnCaja').innerHTML = wPend > 0.009 ? '<br>En caja ahora: <b class="neg">' + eur(wCierres + t - wPend) + '</b> <small>(faltan ' + eur(wPend) + ' por reponer)</small>' : '';
+}
+$('wAddAj').addEventListener('click', lineaAjWU);
+CARGAR.rwu = function () { wInit = false; wRef = null; $('wFechas').style.display = 'none'; $('wCambiar').style.display = ''; cargarWU(); };
+['wDesde', 'wHasta'].forEach(function (id) { $(id).addEventListener('change', function () { wRef = null; cargarWU(); }); });
+$('wCambiar').addEventListener('click', function () { $('wFechas').style.display = 'flex'; this.style.display = 'none'; });
+$('wPrev').addEventListener('click', function () { wRef = sumarDia($('wDesde').value, -1); cargarWU(); });
+$('wNext').addEventListener('click', function () { wRef = sumarDia($('wHasta').value, 1); cargarWU(); });
+function corta(iso) { var p = iso.split('-'); return diaDe(iso).slice(0, 3) + ' ' + p[2] + '/' + p[1]; }
+function cargarWU() {
+  var p = wRef ? run('propuestaRecogidaWU', null, null, wRef) : (wInit ? run('propuestaRecogidaWU', $('wDesde').value, $('wHasta').value) : run('propuestaRecogidaWU'));
+  conCarga($('p-rwu'), p).then(function (r) {
+    wInit = true; $('wDesde').value = r.desde; $('wHasta').value = r.hasta;
+    $('wBloque').innerHTML = corta(r.desde) + ' → ' + corta(r.hasta) + '<small>' + (r.esBloque ? (diaDe(r.hasta) === 'miércoles' ? 'bloque lunes–miércoles' : 'bloque jueves–domingo') : 'fechas a mano') + (r.enCurso ? ' · en curso' : '') + '</small>';
+    $('wFecha').textContent = diaDe(r.fechaRecogida) + ' ' + r.fechaRecogida.split('-').reverse().join('/');
+    var pendL = {}; (r.porReponer || []).forEach(function (x) { pendL[x.local] = x.pendiente; });
+    wPend = 0; Object.keys(pendL).forEach(function (k) { wPend += pendL[k]; });
+    $('wLocales').innerHTML = r.locales.map(function (l) {
+      return '<div class="kv"><span>' + esc(l) + (pendL[l] ? '<br><small class="neg">falta reponer ' + eur(pendL[l]) + '</small>' : '') + '</span><b>' + eur(r.porLocal[l]) + '</b></div>';
+    }).join('');
+    wCierres = r.total; $('wAjustes').innerHTML = ''; $('wMotivo').value = ''; $('wMotivo').style.display = 'none';
+    calcAjWU();
+    var ul = $('wDias');
+    if (!r.dias.length) vacio(ul, 'No hay cierres WU sin recoger en estas fechas.');
+    else ul.innerHTML = r.dias.map(function (x) {
+      var fd = (r.faltasBloque || []).filter(function (f) { return f.fecha === x.fecha; });
+      return '<li><div class="c"><span class="tit" style="text-transform:capitalize">' + esc(x.dia) + '</span> ' + esc(x.fecha) +
+        fd.map(function (f) { return '<div class="sub neg">Falta reponer ' + eur(f.importe) + ' (' + esc(f.local) + ')' + (f.nota ? ' · ' + esc(f.nota) : '') + '</div>'; }).join('') +
+        '</div><div class="imp">' + eur(x.total) + '</div></li>';
+    }).join('');
+    var av = [];
+    if (r.enCurso) av.push('Este bloque aún está en curso: se prepara el ' + diaDe(r.fechaRecogida) + ' después del cierre.');
+    else if (r.faltan && r.faltan.length) av.push('Faltan cierres WU: ' + r.faltan.join(' · ') + '.');
+    if (r.porReponer && r.porReponer.length) av.unshift('Falta reponer ' + r.porReponer.map(function (x) { return eur(x.pendiente) + ' (' + x.local + ')'; }).join(', ') + ' antes de preparar el dinero.');
+    if (r.pendientesAntes) av.push('Hay ' + r.pendientesAntes + ' día(s) anteriores sin recoger (' + eur(r.totalAntes) + ').');
+    if (r.yaRecogidos) av.push(r.yaRecogidos + ' día(s) de este rango ya estaban recogidos y no se cuentan.');
+    $('wAviso').style.display = av.length ? 'block' : 'none'; $('wAviso').textContent = av.join(' ');
+    $('wBtn').disabled = !r.dias.length;
+    var h = $('wHist');
+    if (!r.recientes.length) vacio(h, 'Ninguna todavía.');
+    else {
+      h.innerHTML = r.recientes.map(function (x) {
+        var acc = x.entregada ? '<span class="chip v">Entregada ' + esc(x.entregada) + '</span><button class="anb g" data-noent="' + esc(x.id) + '">Deshacer</button>'
+          : '<span class="chip n">En caja</span><button class="okb" data-ent="' + esc(x.id) + '">Entregado ✓</button>';
+        acc += '<button class="anb g" data-aj="' + esc(x.id) + '">Ajustar</button>';
+        return '<li style="flex-wrap:wrap"><div class="c"><div class="tit">' + esc(x.desde) + ' → ' + esc(x.hasta) + '</div><div class="sub">' + esc(x.id) + ' · ' + esc(x.detalle) + '</div></div>' +
+          '<div class="imp">' + eur(x.total) + (x.ajuste ? '<div class="sub">cierres ' + eur(x.cierres) + '</div>' : '') + '</div><div class="acc">' + acc + '</div>' +
+          '<div class="ajform" id="aj-' + esc(x.id) + '" style="display:none;flex:1 1 100%">' +
+          '<div class="linea aj"><select class="ajL"></select><select class="ajT"><option value="-1">− Quitar</option><option value="1">+ Añadir</option></select><input class="ajI" placeholder="€" inputmode="decimal"></div>' +
+          '<input class="ajM" placeholder="Motivo (ej. sobraba según WU)" style="margin-top:8px">' +
+          '<div class="fila" style="margin-top:8px"><button class="btn" data-ajok="' + esc(x.id) + '" style="margin:0">Guardar ajuste</button>' +
+          (x.ajuste ? '<button class="btn sec" data-ajdel="' + esc(x.id) + '" style="margin:0;width:100%">Quitar ajustes</button>' : '') + '</div></div></li>';
+      }).join('');
+      h.querySelectorAll('.ajform .ajL').forEach(function (sel) { opciones(sel, D.localesWU, D.localesWU[0]); });
+      h.querySelectorAll('[data-aj]').forEach(function (b) { b.addEventListener('click', function () {
+        var f = $('aj-' + b.dataset.aj); f.style.display = f.style.display === 'none' ? 'block' : 'none'; if (f.style.display === 'block') f.querySelector('.ajI').focus();
+      }); });
+      h.querySelectorAll('[data-ajok]').forEach(function (b) { b.addEventListener('click', function () {
+        var f = $('aj-' + b.dataset.ajok), v = num(f.querySelector('.ajI').value);
+        if (!v) return toast('Indica el importe.', false);
+        boton(b, run('ajustarRecogidaWU', {id: b.dataset.ajok, local: f.querySelector('.ajL').value, importe: v * Number(f.querySelector('.ajT').value), motivo: f.querySelector('.ajM').value}),
+          function (r) { toast('Ajuste guardado · a entregar ' + eur(r.total)); cargarWU(); });
+      }); });
+      h.querySelectorAll('[data-ajdel]').forEach(function (b) { b.addEventListener('click', function () {
+        if (!confirm('¿Quitar todos los ajustes de ' + b.dataset.ajdel + '?')) return;
+        boton(b, run('ajustarRecogidaWU', {id: b.dataset.ajdel, borrar: true}), function (r) { toast('Ajustes quitados · ' + eur(r.total)); cargarWU(); });
+      }); });
+      h.querySelectorAll('[data-ent]').forEach(function (b) { b.addEventListener('click', function () {
+        if (!confirm('¿WU ya se ha llevado la recogida ' + b.dataset.ent + '?')) return;
+        boton(b, run('marcarEntregadaWU', b.dataset.ent), function () { toast('Marcada como entregada'); cargarWU(); });
+      }); });
+      h.querySelectorAll('[data-noent]').forEach(function (b) { b.addEventListener('click', function () {
+        if (!confirm('¿Quitar la marca de entregada de ' + b.dataset.noent + '?')) return;
+        boton(b, run('deshacerEntregaWU', b.dataset.noent), function () { toast('Marca quitada'); cargarWU(); });
+      }); });
+    }
+    $('wCaja').textContent = r.enCaja ? 'en caja: ' + eur(r.enCaja) : '';
+  }).catch(fallo);
+}
+$('wBtn').addEventListener('click', function () {
+  if (!confirm('¿Guardar la recogida WU de ' + $('wTotal').textContent + '?')) return;
+  boton(this, run('guardarRecogidaWU', {desde: $('wDesde').value, hasta: $('wHasta').value, ajustes: ajustesWU(), motivo: $('wMotivo').value}), function (r) {
+    toast('Recogida ' + r.id + ' guardada · a entregar ' + eur(r.total)); wInit = false; wRef = null; cargarWU();
+  });
 });
 
 /* ───────── DIVISAS (Cambio) ───────── */
