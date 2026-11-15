@@ -83,6 +83,7 @@ input,select{width:100%;padding:10px;border:1px solid var(--line);border-radius:
     <button id="tab-resumen" class="activa" onclick="irA('resumen')">Resumen</button>
     <button id="tab-cambio" onclick="irA('cambio')">Cambio de divisas</button>
     <button id="tab-cierre" onclick="irA('cierre')">Cierre WU/RIA</button>
+    <button id="tab-tienda" onclick="irA('tienda')">Cierre tienda</button>
   </nav>
 </header>
 <main>
@@ -135,6 +136,42 @@ input,select{width:100%;padding:10px;border:1px solid var(--line);border-radius:
   <div id="aviso-cierre" class="aviso" style="display:none"></div>
   <div id="bien-cierre" class="bien" style="display:none"></div>
   <button class="btn-marca" style="width:100%" onclick="guardarCierre()">Guardar cierre</button>
+</section>
+
+<section id="pantalla-tienda" class="pantalla">
+  <div class="tarjeta">
+    <label for="ti-tienda">Tienda</label>
+    <select id="ti-tienda"></select>
+    <label for="ti-fecha">Fecha</label>
+    <input id="ti-fecha" type="date">
+  </div>
+  <div class="tarjeta">
+    <h2>Z (efectivo exacto)</h2>
+    <label for="ti-efz">Efectivo</label>
+    <input id="ti-efz" type="number" inputmode="decimal" step="0.01">
+    <label for="ti-gz">Gastos</label>
+    <input id="ti-gz" type="number" inputmode="decimal" step="0.01">
+    <div class="fila"><span class="et">Total Z</span><span class="val" id="ti-totz">—</span></div>
+  </div>
+  <div class="tarjeta">
+    <h2>Stacker (sacado y gastos redondeados)</h2>
+    <label for="ti-sac">Sacado</label>
+    <input id="ti-sac" type="number" inputmode="decimal" step="0.01">
+    <label for="ti-gs">Gastos</label>
+    <input id="ti-gs" type="number" inputmode="decimal" step="0.01">
+    <label for="ti-fal">Faltante (si lo hay)</label>
+    <input id="ti-fal" type="number" inputmode="decimal" step="0.01">
+    <div class="fila"><span class="et">Total Stacker</span><span class="val" id="ti-tots">—</span></div>
+    <div class="fila" id="ti-fila-dif" style="display:none">
+      <span class="et">Diferencia Stacker − Z</span><span class="val" id="ti-dif">—</span></div>
+  </div>
+  <div class="tarjeta">
+    <label for="ti-notas">Notas</label>
+    <input id="ti-notas" type="text">
+  </div>
+  <div id="aviso-tienda" class="aviso" style="display:none"></div>
+  <div id="bien-tienda" class="bien" style="display:none"></div>
+  <button class="btn-marca" id="ti-btn" style="width:100%" onclick="enviarCierreTienda()">Guardar cierre</button>
 </section>
 
 </main>
@@ -214,13 +251,14 @@ function conDatosIniciales() {
 
 // ---- Pestañas ----
 function irA(nombre) {
-  ['resumen', 'cambio', 'cierre'].forEach(function (n) {
+  ['resumen', 'cambio', 'cierre', 'tienda'].forEach(function (n) {
     document.getElementById('pantalla-' + n).classList.toggle('activa', n === nombre);
     document.getElementById('tab-' + n).classList.toggle('activa', n === nombre);
   });
   if (nombre === 'resumen') cargarResumen();
   if (nombre === 'cambio') prepararCambio();
   if (nombre === 'cierre') prepararCierre();
+  if (nombre === 'tienda') prepararTienda();
 }
 
 // ---- Resumen ----
@@ -361,6 +399,84 @@ function guardarCierre() {
       '✔ Guardado. WU: ' + (r.wu === null ? '—' : eur(r.wu)) + ' · RIA: ' + (r.ria === null ? '—' : eur(r.ria));
     document.getElementById('bien-cierre').style.display = 'block';
   }).catch(function (e) { avisar('aviso-cierre', e.message || 'No se pudo guardar.'); });
+}
+
+// ---- Cierre tienda ----
+function num(v) { v = parseFloat(v); return isNaN(v) ? null : v; }
+
+function prepararTienda() {
+  if (!leerConexion()) { mostrarConexion(''); return; }
+  if (!document.getElementById('ti-fecha').value) document.getElementById('ti-fecha').value = hoyIso();
+  conDatosIniciales().then(function (d) {
+    var sel = document.getElementById('ti-tienda');
+    if (!sel.options.length) {
+      sel.innerHTML = (d.tiendas || []).map(function (t) { return '<option value="' + t + '">' + t + '</option>'; }).join('');
+      sel.style.display = (d.tiendas || []).length > 1 ? '' : 'none';
+    }
+    return cargarCierreTiendaDia();
+  }).catch(function (e) { avisar('aviso-tienda', e.message || 'No se pudo cargar.'); });
+  document.getElementById('ti-tienda').onchange = cargarCierreTiendaDia;
+  document.getElementById('ti-fecha').onchange = cargarCierreTiendaDia;
+  ['ti-efz', 'ti-gz', 'ti-sac', 'ti-gs', 'ti-fal'].forEach(function (id) {
+    document.getElementById(id).oninput = calcTienda;
+  });
+}
+
+function calcTienda() {
+  var efz = num(document.getElementById('ti-efz').value);
+  var gz = num(document.getElementById('ti-gz').value) || 0;
+  var sac = num(document.getElementById('ti-sac').value);
+  var gs = num(document.getElementById('ti-gs').value) || 0;
+  var fal = num(document.getElementById('ti-fal').value) || 0;
+  document.getElementById('ti-totz').textContent = efz === null ? '—' : eur(efz - gz);
+  document.getElementById('ti-tots').textContent = sac === null ? '—' : eur(sac - gs - fal);
+  var filaDif = document.getElementById('ti-fila-dif');
+  if (efz !== null && sac !== null) {
+    filaDif.style.display = 'flex';
+    document.getElementById('ti-dif').textContent = eur((sac - gs) - (efz - gz));
+  } else filaDif.style.display = 'none';
+}
+
+function cargarCierreTiendaDia() {
+  var tienda = document.getElementById('ti-tienda').value;
+  var fecha = document.getElementById('ti-fecha').value;
+  if (!tienda || !fecha) return Promise.resolve();
+  avisar('bien-tienda', '');
+  return llamar('getCierreTienda', [tienda, fecha]).then(function (c) {
+    document.getElementById('ti-efz').value = c ? c.efz : '';
+    document.getElementById('ti-gz').value = c ? c.gz : '';
+    document.getElementById('ti-sac').value = c ? c.sacado : '';
+    document.getElementById('ti-gs').value = c ? c.gs : '';
+    document.getElementById('ti-fal').value = c && c.faltante ? c.faltante : '';
+    document.getElementById('ti-notas').value = c ? (c.notas || '') : '';
+    var recogido = !!(c && c.estado === 'Recogido');
+    document.getElementById('ti-btn').disabled = recogido;
+    document.getElementById('ti-btn').textContent = c ? 'Actualizar cierre' : 'Guardar cierre';
+    avisar('aviso-tienda', recogido ? 'Este cierre ya está recogido. Para cambiarlo, hazlo en la hoja.'
+      : (c ? 'Ya hay un cierre este día: si guardas, se actualiza.' : ''));
+    calcTienda();
+  });
+}
+
+function enviarCierreTienda() {
+  var tienda = document.getElementById('ti-tienda').value;
+  var fecha = document.getElementById('ti-fecha').value;
+  avisar('bien-tienda', '');
+  if (!tienda) { avisar('aviso-tienda', 'Elige la tienda.'); return; }
+  if (!fecha) { avisar('aviso-tienda', 'Falta la fecha.'); return; }
+  var d = {
+    tienda: tienda, fecha: fecha,
+    efz: document.getElementById('ti-efz').value, gz: document.getElementById('ti-gz').value,
+    sacado: document.getElementById('ti-sac').value, gs: document.getElementById('ti-gs').value,
+    faltante: document.getElementById('ti-fal').value, notas: document.getElementById('ti-notas').value
+  };
+  llamar('guardarCierreTienda', [d]).then(function (r) {
+    avisar('aviso-tienda', '');
+    document.getElementById('bien-tienda').textContent =
+      (r.actualizado ? '✔ Actualizado' : '✔ Guardado') + ' · stacker ' + eur(r.totS);
+    document.getElementById('bien-tienda').style.display = 'block';
+    cargarCierreTiendaDia();
+  }).catch(function (e) { avisar('aviso-tienda', e.message || 'No se pudo guardar.'); });
 }
 
 if ('serviceWorker' in navigator) {

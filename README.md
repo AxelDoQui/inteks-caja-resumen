@@ -1,7 +1,7 @@
 # InTeks Caja
 
 PWA para Android (y cualquier navegador) que habla con la misma API que ya
-usa el Panel de Cierres de escritorio. Tres pestañas:
+usa el Panel de Cierres de escritorio. Cuatro pestañas:
 
 - **Resumen** — pendiente de ingresar, fondo, pendiente de reponer a WU/RIA,
   divisas en poder (`resumenApp`). Solo lectura.
@@ -9,6 +9,10 @@ usa el Panel de Cierres de escritorio. Tres pestañas:
   fecha, notas), igual que «Apuntar un cambio» de la web (`guardarCambio`).
 - **Cierre WU/RIA** — el importe de cada local por día, igual que esa misma
   pantalla de la web (`getEnvios`/`guardarEnvios`).
+- **Cierre tienda** — el Z (efectivo y gastos exactos) y el Stacker (sacado y
+  gastos redondeados) de una tienda y un día, igual que la web
+  (`getCierreTienda`/`guardarCierreTienda`). Bloqueado si ese cierre ya está
+  recogido, igual que la web.
 
 Los guardados van **directos a la hoja**, sin cola ni reintento: si no hay
 red, se avisa y no se guarda nada (como la web; a diferencia del Panel de
