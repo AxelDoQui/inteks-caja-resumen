@@ -1,18 +1,29 @@
 # InTeks Caja
 
-PWA para Android (y cualquier navegador) que habla con la misma API que ya
-usa el Panel de Cierres de escritorio. Cuatro pestañas:
+PWA para Android (y cualquier navegador), con el **mismo diseño que la web**
+de InTeks Caja (mismo CSS, iconos e Inicio con la rejilla de baldosas) pero
+hablando con el script por `fetch` en vez de `google.script.run`. Pantallas:
 
-- **Resumen** — pendiente de ingresar, fondo, pendiente de reponer a WU/RIA,
-  divisas en poder (`resumenApp`). Solo lectura.
-- **Cambio de divisas** — apuntar un cambio (local, divisa, cantidad, euros,
-  fecha, notas), igual que «Apuntar un cambio» de la web (`guardarCambio`).
-- **Cierre WU/RIA** — el importe de cada local por día, igual que esa misma
-  pantalla de la web (`getEnvios`/`guardarEnvios`).
-- **Cierre tienda** — el Z (efectivo y gastos exactos) y el Stacker (sacado y
-  gastos redondeados) de una tienda y un día, igual que la web
-  (`getCierreTienda`/`guardarCierreTienda`). Bloqueado si ese cierre ya está
-  recogido, igual que la web.
+- **Inicio / Resumen** — pendiente de ingresar, WU en caja, fondo disponible
+  y lo pendiente de reponer a WU/RIA (`resumenApp`). Solo lectura.
+- **Cierre tienda** — Z (efectivo y gastos exactos) y Stacker (sacado y
+  gastos redondeados), igual que la web (`getCierreTienda`/`guardarCierreTienda`).
+  Bloqueado si ese cierre ya está recogido.
+- **Cierre WU/RIA** — el importe de cada local por día (`getEnvios`/`guardarEnvios`).
+  Los locales que cierran domingo se deshabilitan ese día, y si el WU de un
+  día ya está en una recogida se bloquea entero, igual que la web.
+- **Recogida tienda** — cierres sin recoger, lo traído del fondo de locales,
+  aportes y retiradas, reponer a WU/RIA con ese dinero, y lo pendiente de
+  ingresar en el banco (marcar como ingresado o sacar dinero antes de
+  ingresarlo), igual que la web (`getPendientesTienda`, `getTraidosPendientes`,
+  `getDeudaEnvios`, `guardarRecogidaTienda`, `getSinIngresar`,
+  `marcarIngresada`, `sacarDeRecogida`).
+- **Divisas → Cambio de divisas** — local, divisa, cantidad, euros, fecha y
+  notas (`guardarCambio`). Reponer y Fondo de divisas aún no están aquí.
+
+Las baldosas de Inicio para lo que aún no está construido (Recogida WU,
+Historial) avisan con un toast en vez de desaparecer, para que la rejilla se
+vea completa como en la web.
 
 Los guardados van **directos a la hoja**, sin cola ni reintento: si no hay
 red, se avisa y no se guarda nada (como la web; a diferencia del Panel de
