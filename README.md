@@ -1,9 +1,18 @@
-# InTeks Caja — Resumen
+# InTeks Caja
 
-PWA de solo lectura para Android (y cualquier navegador): muestra el Resumen
-del mes de InTeks Caja (pendiente de ingresar, fondo, pendiente de reponer a
-WU/RIA, divisas en poder) llamando a la misma API que ya usa el Panel de
-Cierres de escritorio (`resumenApp`). No guarda ni envía nada: solo lee.
+PWA para Android (y cualquier navegador) que habla con la misma API que ya
+usa el Panel de Cierres de escritorio. Tres pestañas:
+
+- **Resumen** — pendiente de ingresar, fondo, pendiente de reponer a WU/RIA,
+  divisas en poder (`resumenApp`). Solo lectura.
+- **Cambio de divisas** — apuntar un cambio (local, divisa, cantidad, euros,
+  fecha, notas), igual que «Apuntar un cambio» de la web (`guardarCambio`).
+- **Cierre WU/RIA** — el importe de cada local por día, igual que esa misma
+  pantalla de la web (`getEnvios`/`guardarEnvios`).
+
+Los guardados van **directos a la hoja**, sin cola ni reintento: si no hay
+red, se avisa y no se guarda nada (como la web; a diferencia del Panel de
+escritorio, que si tiene cola para sus propias pantallas).
 
 La primera vez que se abre pide la URL (`.../exec`) y la clave de
 ⚙️ Configuración → Conexión del Panel de Cierres; se guardan solo en

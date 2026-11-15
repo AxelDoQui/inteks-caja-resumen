@@ -1,6 +1,6 @@
 {
-  "name": "InTeks Caja — Resumen",
-  "short_name": "Caja Resumen",
+  "name": "InTeks Caja",
+  "short_name": "Caja",
   "start_url": "./index.html",
   "scope": "./",
   "display": "standalone",
