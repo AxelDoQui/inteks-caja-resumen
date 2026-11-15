@@ -1,0 +1,187 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, viewport-fit=cover">
+<meta name="theme-color" content="#eef1ef">
+<link rel="manifest" href="manifest.webmanifest">
+<link rel="apple-touch-icon" href="icono-192.png">
+<title>InTeks Caja — Resumen</title>
+<style>
+:root{
+  --bg:#eef1ef; --surface:#ffffff; --ink:#14211d; --sub:#5a6a64; --line:#dde4e1;
+  --marca:#0e5a4a; --marca-tinte:#e2efea; --rojo:#b42318; --rojo-bg:#fdecea;
+}
+*{box-sizing:border-box}
+html,body{margin:0;background:var(--bg);color:var(--ink);
+  font-family:system-ui,-apple-system,"Segoe UI",Roboto,sans-serif;font-size:15px}
+b,.n{font-variant-numeric:tabular-nums}
+header{padding:16px;padding-top:max(16px,env(safe-area-inset-top));
+  background:var(--marca);color:#fff}
+header h1{margin:0;font-size:18px;font-weight:700}
+header p{margin:4px 0 0;font-size:13px;opacity:.85}
+main{padding:12px 16px 32px;max-width:520px;margin:0 auto}
+.tarjeta{background:var(--surface);border:1px solid var(--line);border-radius:14px;
+  padding:16px;margin-bottom:12px}
+.tarjeta h2{margin:0 0 10px;font-size:13px;color:var(--sub);font-weight:700;
+  text-transform:uppercase;letter-spacing:.02em}
+.fila{display:flex;justify-content:space-between;align-items:baseline;
+  padding:6px 0;border-bottom:1px solid var(--line)}
+.fila:last-child{border-bottom:none}
+.fila .et{color:var(--sub)}
+.fila .val{font-weight:700}
+.grande{font-size:26px;font-weight:800}
+.aviso{background:var(--rojo-bg);color:var(--rojo);border-radius:10px;padding:10px 12px;
+  font-size:13px;margin-bottom:12px}
+button{font:inherit;cursor:pointer;border:0;border-radius:10px;padding:10px 14px}
+.btn-marca{background:var(--marca);color:#fff}
+.btn-blanco{background:var(--surface);color:var(--ink);border:1px solid var(--line)}
+.top-acciones{display:flex;gap:8px;margin:12px 0}
+.top-acciones button{flex:1}
+.sub{color:var(--sub);font-size:12px}
+#pantalla-conexion{position:fixed;inset:0;background:var(--bg);z-index:1000;
+  display:flex;flex-direction:column;justify-content:center;padding:24px}
+#pantalla-conexion .tarjeta{max-width:420px;margin:0 auto;width:100%}
+label{display:block;font-size:12px;color:var(--sub);margin:10px 0 4px;font-weight:600}
+input{width:100%;padding:10px;border:1px solid var(--line);border-radius:8px;font:inherit}
+#error-conexion{color:var(--rojo);font-size:13px;min-height:18px;margin-top:8px}
+</style>
+</head>
+<body>
+
+<div id="pantalla-conexion" style="display:none">
+  <div class="tarjeta">
+    <h2 style="text-transform:none;font-size:18px;color:var(--ink)">Conectar con InTeks Caja</h2>
+    <p class="sub">Pega la URL y la clave de ⚙️ Configuración → Conexión del Panel de Cierres.
+       Se guardan solo en este móvil, nunca se suben a ningún sitio.</p>
+    <label for="c-url">URL de InTeks Caja (acaba en /exec)</label>
+    <input id="c-url" type="url" placeholder="https://script.google.com/macros/s/.../exec">
+    <label for="c-token">Clave (token)</label>
+    <input id="c-token" type="text" placeholder="la clave">
+    <div id="error-conexion"></div>
+    <button class="btn-marca" style="width:100%;margin-top:12px" onclick="conectar()">Conectar</button>
+  </div>
+</div>
+
+<header>
+  <h1>InTeks Caja</h1>
+  <p id="sub-mes">Resumen</p>
+</header>
+<main>
+  <div class="top-acciones">
+    <button class="btn-blanco" onclick="cargar()">↻ Actualizar</button>
+    <button class="btn-blanco" onclick="mostrarConexion('')">Cambiar conexión</button>
+  </div>
+  <div id="aviso" class="aviso" style="display:none"></div>
+  <div id="contenido"></div>
+</main>
+
+<script>
+var CLAVE = 'caja_resumen_conexion';
+var RE_URL = /^https:\/\/script\.google\.com\/.+\/exec$/;
+
+function leerConexion() {
+  try {
+    var c = JSON.parse(localStorage.getItem(CLAVE));
+    if (c && typeof c.u === 'string' && c.u && typeof c.t === 'string' && c.t) return c;
+  } catch (e) { /* sin conexión guardada */ }
+  return null;
+}
+
+function mostrarConexion(aviso) {
+  document.getElementById('error-conexion').textContent = aviso || '';
+  var con = leerConexion();
+  if (con) {
+    document.getElementById('c-url').value = con.u;
+    document.getElementById('c-token').value = con.t;
+  }
+  document.getElementById('pantalla-conexion').style.display = 'flex';
+}
+
+function conectar() {
+  var url = document.getElementById('c-url').value.trim();
+  var token = document.getElementById('c-token').value.trim();
+  var error = document.getElementById('error-conexion');
+  if (!RE_URL.test(url)) { error.textContent = 'Esa URL no parece de Apps Script (tiene que acabar en /exec).'; return; }
+  if (!token) { error.textContent = 'Falta la clave.'; return; }
+  localStorage.setItem(CLAVE, JSON.stringify({u: url, t: token}));
+  document.getElementById('pantalla-conexion').style.display = 'none';
+  cargar();
+}
+
+function eur(v) {
+  v = Number(v) || 0;
+  return v.toLocaleString('es-ES', {minimumFractionDigits: 2, maximumFractionDigits: 2}) + ' €';
+}
+
+function avisar(msg) {
+  var a = document.getElementById('aviso');
+  if (!msg) { a.style.display = 'none'; return; }
+  a.textContent = msg;
+  a.style.display = 'block';
+}
+
+function llamar(fn, args) {
+  var con = leerConexion();
+  if (!con) return Promise.reject(new Error('Sin conexión configurada'));
+  return fetch(con.u, {
+    method: 'POST',
+    redirect: 'follow',
+    headers: {'Content-Type': 'text/plain;charset=utf-8'},
+    body: JSON.stringify({token: con.t, fn: fn, args: args || []})
+  }).then(function (r) { return r.json(); }).then(function (res) {
+    if (res && res.ok) return res.result;
+    var mensaje = (res && res.error) || 'Error desconocido';
+    if (/clave/i.test(mensaje)) mostrarConexion(mensaje);
+    throw new Error(mensaje);
+  });
+}
+
+function pintar(r) {
+  document.getElementById('sub-mes').textContent = 'Resumen de ' + r.mes;
+  var porReponer = (r.porReponer || []).map(function (f) {
+    return '<div class="fila"><span class="et">' + f.compania + ' · ' + f.local +
+      '</span><span class="val">' + eur(f.pendiente) + '</span></div>';
+  }).join('') || '<div class="fila"><span class="et">Nada pendiente de reponer</span></div>';
+  var enPoder = Object.keys(r.enPoder || {});
+  var filasPoder = enPoder.length
+    ? enPoder.map(function (d) {
+        return '<div class="fila"><span class="et">' + d + '</span><span class="val n">' +
+          Number(r.enPoder[d]).toLocaleString('es-ES') + '</span></div>';
+      }).join('')
+    : '<div class="fila"><span class="et">Sin divisas en poder</span></div>';
+
+  document.getElementById('contenido').innerHTML =
+    '<div class="tarjeta">' +
+      '<h2>Pendiente de ingresar</h2>' +
+      '<div class="grande n">' + eur(r.pendIngresar) + '</div>' +
+    '</div>' +
+    '<div class="tarjeta">' +
+      '<div class="fila"><span class="et">Fondo disponible</span><span class="val">' + eur(r.fondo) + '</span></div>' +
+      '<div class="fila"><span class="et">Pendiente de reponer (total)</span><span class="val">' + eur(r.pendReponer) + '</span></div>' +
+    '</div>' +
+    '<div class="tarjeta"><h2>Falta reponer a WU/RIA</h2>' + porReponer + '</div>' +
+    '<div class="tarjeta"><h2>En poder (divisas)</h2>' + filasPoder + '</div>';
+}
+
+function cargar() {
+  if (!leerConexion()) { mostrarConexion(''); return; }
+  avisar('');
+  document.getElementById('contenido').innerHTML = '<p class="sub">Cargando…</p>';
+  llamar('resumenApp', []).then(pintar).catch(function (e) {
+    avisar(e && e.message ? e.message : 'No se pudo cargar.');
+    document.getElementById('contenido').innerHTML = '';
+  });
+}
+
+if ('serviceWorker' in navigator) {
+  window.addEventListener('load', function () {
+    navigator.serviceWorker.register('sw.js').catch(function () {});
+  });
+}
+
+if (!leerConexion()) mostrarConexion('');
+else cargar();
+</script>
+</body>
+</html>
