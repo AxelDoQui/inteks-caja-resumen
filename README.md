@@ -4,8 +4,13 @@ PWA para Android (y cualquier navegador), con el **mismo diseño que la web**
 de InTeks Caja (mismo CSS, iconos e Inicio con la rejilla de baldosas) pero
 hablando con el script por `fetch` en vez de `google.script.run`. Pantallas:
 
-- **Inicio / Resumen** — pendiente de ingresar, WU en caja, fondo disponible
-  y lo pendiente de reponer a WU/RIA (`resumenApp`). Solo lectura.
+- **Inicio** — pendiente de ingresar, WU en caja, fondo disponible y lo
+  pendiente de reponer a WU/RIA (`resumenApp`). Solo lectura.
+- **Resumen** — con selector de mes: cada tienda (días, Z, Stacker,
+  diferencia, sin recoger), banco, WU y RIA por local, y divisas (fondo,
+  pendiente de reponer, qué hay en el fondo). Igual que la web, salvo las
+  tarjetas de administración multi-local (Fondos de locales, PCs, Automáticos),
+  que no están aquí.
 - **Cierre tienda** — Z (efectivo y gastos exactos) y Stacker (sacado y
   gastos redondeados), igual que la web (`getCierreTienda`/`guardarCierreTienda`).
   Bloqueado si ese cierre ya está recogido.

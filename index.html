@@ -422,14 +422,8 @@ input:disabled{opacity:.6}
 
 <!-- ═════════ RESUMEN ═════════ -->
 <section class="pant" id="p-resumen">
-  <div class="card">
-    <h2>Pendiente de reponer a WU/RIA</h2>
-    <ul class="lista" id="sReponer"></ul>
-  </div>
-  <div class="card">
-    <h2>En poder (divisas)</h2>
-    <ul class="lista" id="sPoder"></ul>
-  </div>
+  <input type="month" id="sMes" style="margin-bottom:12px">
+  <div id="sCont"></div>
 </section>
 
 <!-- ═════════ HISTORIAL / ANULAR ═════════ -->
@@ -1018,18 +1012,25 @@ $('dfBtn').addEventListener('click', function () {
 });
 
 /* ───────── RESUMEN ───────── */
-CARGAR.resumen = function () {
-  conCarga($('p-resumen'), run('resumenApp')).then(function (r) {
-    var rep = $('sReponer');
-    rep.innerHTML = (r.porReponer || []).length
-      ? r.porReponer.map(function (f) { return '<li><div class="c"><div class="tit">' + esc(f.compania + ' · ' + f.local) + '</div></div><div class="imp neg">' + eur(f.pendiente) + '</div></li>'; }).join('')
-      : '<li class="vacio">Nada pendiente de reponer.</li>';
-    var poder = Object.keys(r.enPoder || {});
-    $('sPoder').innerHTML = poder.length
-      ? poder.map(function (d) { return '<li><div class="c"><div class="tit">' + esc(d) + '</div></div><div class="imp">' + Number(r.enPoder[d]).toLocaleString('es-ES') + '</div></li>'; }).join('')
-      : '<li class="vacio">Sin divisas en poder.</li>';
+CARGAR.resumen = function () { if (!$('sMes').value) $('sMes').value = D.hoy.slice(0, 7); cargarResumen(); };
+$('sMes').addEventListener('change', cargarResumen);
+function kv(k, v) { return '<div class="kv"><span>' + esc(k) + '</span><b>' + v + '</b></div>'; }
+function cargarResumen() {
+  conCarga($('p-resumen'), run('resumenApp', $('sMes').value)).then(function (r) {
+    var h = '';
+    Object.keys(r.tiendas).forEach(function (t) { var x = r.tiendas[t];
+      h += '<div class="card"><h2>' + esc(t) + '</h2>' + kv('Días cerrados', x.dias) + kv('Total Z', eur(x.totZ)) + kv('Gastos Z', eur(x.gastosZ)) +
+        kv('Total stacker', eur(x.totS)) + kv('Diferencia', '<span class="' + clase(x.dif) + '">' + eur(x.dif) + '</span>') + kv('Sin recoger (ahora)', eur(x.sinRecoger)) + '</div>'; });
+    h += '<div class="card"><h2>Banco</h2>' + kv('Pendiente de ingresar (ahora)', eur(r.pendIngresar)) + '</div>';
+    h += '<div class="card"><h2>Western Union</h2>' + Object.keys(r.wu.porLocal).map(function (l) { return kv(l, eur(r.wu.porLocal[l])); }).join('') +
+      kv('Total del mes', eur(r.wu.total)) + kv('Sin recoger (ahora)', eur(r.wu.sinRecoger)) + '</div>';
+    h += '<div class="card"><h2>RIA</h2>' + Object.keys(r.ria.porLocal).map(function (l) { return kv(l, eur(r.ria.porLocal[l])); }).join('') + '</div>';
+    var p = Object.keys(r.enPoder);
+    h += '<div class="card"><h2>Divisas</h2>' + kv('Fondo disponible', '<span class="' + (r.fondo - r.pendReponer < 0 ? 'neg' : '') + '">' + eur(r.fondo - r.pendReponer) + '</span>') + kv('En el fondo', eur(r.fondo)) + kv('Pendiente de reponer', eur(r.pendReponer)) +
+      kv('Divisas en el fondo', p.length ? p.map(function (k) { return fmt(r.enPoder[k]) + ' ' + esc(k); }).join(' · ') : '—') + '</div>';
+    $('sCont').innerHTML = h;
   }).catch(fallo);
-};
+}
 
 /* ───────── HISTORIAL / ANULAR ───────── */
 var hTipo = 'tienda';
